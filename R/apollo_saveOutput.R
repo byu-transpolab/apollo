@@ -13,6 +13,7 @@
 #'   \item \code{(modelName).F12} F12 file with model results. Compatible with ALOGIT.
 #' }
 #' @param model Model object. Estimated model object as returned by function \link{apollo_estimate}.
+#' @param path Path to write directory. Defaults to home directory.
 #' @param saveOutput_settings List of options. Valid options are the following.
 #'                            \itemize{
 #'                               \item \code{printClassical}: Boolean. TRUE for printing classical standard errors. TRUE by default.
@@ -37,7 +38,7 @@
 #' @export
 #' @importFrom RSGHB writeModel
 #' @importFrom utils capture.output
-apollo_saveOutput=function(model, saveOutput_settings=NA){
+apollo_saveOutput=function(model, path = ".", saveOutput_settings=NA){
   if(length(saveOutput_settings)==1 && is.na(saveOutput_settings)) saveOutput_settings=list()
   default <- list(printClassical   = TRUE,
                   printPVal        = FALSE,
@@ -80,10 +81,12 @@ apollo_saveOutput=function(model, saveOutput_settings=NA){
   
   # Check if files exists, and if they do, rename them as OLD
   modName <- model$apollo_control$modelName
-  if(file.exists( paste0(modName, "_output.txt") )){
+  
+  if(!dir.exists(path)){ dir.create(path, recursive = TRUE) }
+  if(file.exists( file.path(path, paste0(modName, "_output.txt")))){
     # Figure out corresponding OLD verison
     n <- 1
-    while( file.exists( paste0(modName, "_OLD", n, "_output.txt") ) ) n <- n + 1
+    while( file.exists( file.path(path, paste0(modName, "_OLD", n, "_output.txt") )) ) n <- n + 1
     modNameOld <- paste0(modName, "_OLD", n)
     # Rename files
     outFiles <- c("_output.txt", "_estimates.csv", 
@@ -93,9 +96,10 @@ apollo_saveOutput=function(model, saveOutput_settings=NA){
                   "_F.csv", "_A.csv", "_B.csv", "_Bsd.csv", "_C.csv", "_Csd.csv", "_D.csv", 
                   ".log", "_param_non_random.csv", "_param_random_mean.csv", "_param_random_cov_mean.csv",
                   "_param_random_cov_sd.csv", "_param_posterior.csv", "_random_coeff_covar.csv", "_random_coeff_corr.csv")
-    for(i in outFiles) if(file.exists(paste0(modName, i))){
-      file.rename(from=paste0(modName, i), to=paste0(modNameOld, i))
-      cat("\nOld result file \"", paste0(modName, i), "\" \n renamed to: \"", paste0(modNameOld, i), "\"", sep="")
+    for(i in outFiles) if(file.exists(file.path(path, paste0(modName, i)))){
+      file.rename(from=file.path(path, paste0(modName, i)), to= file.path(path, paste0(modNameOld, i)))
+      cat("\nOld result file \"", file.path(path, paste0(modName, i)),
+          "\" \n renamed to: \"", file.path(path, paste0(modNameOld, i)), "\"", sep="")
     }
     cat("\n")
   }
@@ -104,7 +108,7 @@ apollo_saveOutput=function(model, saveOutput_settings=NA){
   #sink( paste0(modName, "_output.txt") )
   #tmp <- apollo_modelOutput(model,saveOutput_settings)
   capture.output(tmp <- apollo_modelOutput(model,saveOutput_settings),
-                 file=paste0(modName, "_output.txt"))
+                 file=file.path(path, paste0(modName, "_output.txt")))
   #sink()
   
   # ################################## #
@@ -116,10 +120,10 @@ apollo_saveOutput=function(model, saveOutput_settings=NA){
       RSGHB::writeModel(model, writeDraws = FALSE, path = getwd())
       cat("RSGHB output saved in following files\n")
       cat("\nOutputs at iteration level (post burn-in chains)\n")
-      if(!is.null(tmp$non_random)) cat("Non-random parameters:",paste(model$apollo_control$modelName, "_F"   ,".csv", sep=""),"\n")
+      if(!is.null(tmp$non_random)) cat("Non-random parameters:",file.path(path, paste(model$apollo_control$modelName, "_F"   ,".csv", sep="")),"\n")
       if(scaling_used) cat("These outputs have had the scaling used in estimation applied to them\n")
       cat("\n")
-      if(!is.null(tmp$random_mean)) cat("Means for underlying normals:",paste(model$apollo_control$modelName, "_A"   ,".csv", sep=""),"\n")
+      if(!is.null(tmp$random_mean)) cat("Means for underlying normals:",file.path(path, paste(model$apollo_control$modelName, "_A"   ,".csv", sep="")),"\n")
       if(scaling_used) cat("These outputs have NOT had the scaling used in estimation applied to them\n")
       cat("\n")
       cat("\nPosteriors\n")
@@ -175,8 +179,8 @@ apollo_saveOutput=function(model, saveOutput_settings=NA){
      }
     if(saveModelObject){
       tryCatch( {
-        saveRDS(model, file=paste0(model$apollo_control$modelName,"_model.rds"))
-        cat("\nModel object saved to",paste(model$apollo_control$modelName, ".rds", sep=""),"\n")
+        saveRDS(model, file=file.path(path, paste0(model$apollo_control$modelName,"_model.rds")))
+        cat("\nModel object saved to", file.path(paste(model$apollo_control$modelName, ".rds", sep=""),"\n"))
         cat("\n")
         }, error=function(e) cat("Model object could not be written to file."))
     }
@@ -207,38 +211,38 @@ apollo_saveOutput=function(model, saveOutput_settings=NA){
     }
     
     # Write to file
-    utils::write.csv(output,paste0(modName,"_estimates.csv"))
-    cat("Estimates saved to",paste0(modName, "_estimates.csv"),"\n")
+    utils::write.csv(output,file.path(path, paste0(modName,"_estimates.csv")))
+    cat("Estimates saved to",file.path(path, paste0(modName, "_estimates.csv")),"\n")
   }
   if(saveCov){
     if(printClassical==TRUE){
-      utils::write.csv(model$varcov,paste0(modName,"_covar.csv"))
-      cat("Classical covariance matrix saved to",paste0(modName, "_covar.csv"),"\n")
+      utils::write.csv(model$varcov,file.path(path, paste0(modName,"_covar.csv")))
+      cat("Classical covariance matrix saved to",file.path(path, paste0(modName, "_covar.csv")),"\n")
       }
-    utils::write.csv(model$robvarcov,paste0(modName,"_robcovar.csv"))
-    cat("Robust covariance matrix saved to",paste0(modName, "_robcovar.csv"),"\n")
+    utils::write.csv(model$robvarcov,file.path(path, paste0(modName,"_robcovar.csv")))
+    cat("Robust covariance matrix saved to",file.path(path, paste0(modName, "_robcovar.csv")),"\n")
     if(!is.null(model$bootstrapSE) && model$bootstrapSE>0){
-      utils::write.csv(model$bootvarcov,paste0(modName,"_bootcovar.csv"))
-      cat("Bootstrap covariance matrix saved to",paste(modName, "_bootcovar.csv"   , sep=""),"\n")
+      utils::write.csv(model$bootvarcov,file.path(path, paste0(modName,"_bootcovar.csv")))
+      cat("Bootstrap covariance matrix saved to",file.path(path, paste(modName, "_bootcovar.csv"   , sep="")),"\n")
     }
   }
   if(saveCorr){
     if(printClassical==TRUE){ 
-      utils::write.csv(model$corrmat,paste0(modName,"_corr.csv"))
-      cat("Classical correlation matrix saved to",paste(modName, "_covar.csv"   , sep=""),"\n")
+      utils::write.csv(model$corrmat,file.path(path, paste0(modName,"_corr.csv")))
+      cat("Classical correlation matrix saved to",file.path(path, paste(modName, "_covar.csv"   , sep="")),"\n")
     }
-    utils::write.csv(model$robcorrmat,paste0(modName,"_robcorr.csv"))
-    cat("Robust correlation matrix saved to",paste0(modName, "_robcorr.csv"),"\n")
+    utils::write.csv(model$robcorrmat,file.path(path, paste0(modName,"_robcorr.csv")))
+    cat("Robust correlation matrix saved to",file.path(path, paste0(modName, "_robcorr.csv")),"\n")
     if(!is.null(model$bootstrapSE) && model$bootstrapSE>0){
-      utils::write.csv(model$bootcorrmat, paste0(modName,"_bootcorr.csv"))
-      cat("Bootstrap correlation matrix saved to",paste(modName, "_bootcorr.csv"   , sep=""),"\n")
+      utils::write.csv(model$bootcorrmat,file.path(path,  paste0(modName,"_bootcorr.csv")))
+      cat("Bootstrap correlation matrix saved to",file.path(path, paste(modName, "_bootcorr.csv"   , sep="")),"\n")
     }
   }
   
   if(saveModelObject){
     tryCatch( {
-      saveRDS(model, file=paste0(modName,"_model.rds"))
-      cat("Model object saved to",paste0(modName, ".rds"),"\n")
+      saveRDS(model, file=file.path(path, paste0(modName,"_model.rds")))
+      cat("Model object saved to",file.path(path, paste0(modName, ".rds")),"\n")
       }, error=function(e) cat("Model object could not be written to file."))
   }
   
