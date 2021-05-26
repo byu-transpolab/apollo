@@ -83,7 +83,7 @@ apollo_estimate  <- function(apollo_beta, apollo_fixed, apollo_probabilities, ap
   apollo_detach()
   
   ### Set missing settings to default values
-  default <- list(estimationRoutine="bfgs", maxIterations=200, writeIter=TRUE, 
+  default <- list(estimationRoutine="bfgs", maxIterations=200, writeIter=FALSE, 
                   hessianRoutine="analytic", printLevel=3L, constraints=NULL, maxLik_settings=NULL, 
                   numDeriv_settings=list(), scaling=NA, bootstrapSE=0, bootstrapSeed=24, silent=FALSE, 
                   scaleHessian=TRUE, scaleAfterConvergence=TRUE)
