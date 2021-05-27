@@ -10,6 +10,11 @@ This is a fork of `Apollo` by Stephane Hess and David Palma. More
 information is available at their
 [website](http://www.apollochoicemodelling.com/)
 
+This fork includes edits and convenience functions that I am using in my
+own work. This is not — and should not be seen as — the official Apollo
+repository. It is likely that this fork could become outdated relative
+to official Apollo.
+
 ## Installation
 
 You can install the released version of apollo from
@@ -19,7 +24,8 @@ You can install the released version of apollo from
 install.packages("apollo")
 ```
 
-And the development version from [GitHub](https://github.com/) with:
+You can install this fork of the repository from
+[GitHub](https://github.com/):
 
 ``` r
 # install.packages("devtools")
