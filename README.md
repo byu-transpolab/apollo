@@ -29,7 +29,7 @@ You can install this fork of the repository from
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("byu-transpolab/apollo")
+devtools::install_github("byu-transpolab/apollo-byu")
 ```
 
 ## Example
